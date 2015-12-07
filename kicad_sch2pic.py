@@ -8,8 +8,7 @@ WIDTH, HEIGHT = 1000, 1000
 
 
 def cms(x, y):
-    maxlen = max(float(WIDTH), float(HEIGHT))
-    return ((x+float(WIDTH)/2)/maxlen, (y+float(HEIGHT)/2)/maxlen)
+    return ((x+float(WIDTH)/2)/WIDTH, (-y+float(HEIGHT)/2)/HEIGHT)
 
 
 def draw_line(ctx, x1, y1, x2, y2):
@@ -20,21 +19,24 @@ def draw_line(ctx, x1, y1, x2, y2):
     return
 
 
-def draw_arc(ctx, x0, y0, r, start_angle, stop_angle, sx, sy):
-    maxlen = max(float(WIDTH), float(HEIGHT))
-    x, y = cms(sx, sy)
-    ctx.move_to(x, y)
-    x, y = cms(x0, y0)
-    r0 = r/maxlen
-    s0 = math.pi/2 * (start_angle-1)
-    e0 = math.pi/2 * (stop_angle-1)
-    ctx.arc(x, y, r0, s0, e0)
-
-
 def draw_point(ctx, x0, y0):
     draw_line(ctx, x0-10, y0, x0+10, y0)
     draw_line(ctx, x0, y0-10, x0, y0+10)
     return
+
+
+def draw_arc(ctx, x0, y0, r, start_angle, stop_angle, sx, sy):
+    maxlen = max(float(WIDTH), float(HEIGHT))
+    x, y = cms(x0, y0)
+    r0 = r/maxlen
+    s0 = math.pi/2 * (start_angle)
+    e0 = math.pi/2 * (stop_angle)
+    print(s0, e0)
+    sx = x0 + r*math.cos(s0)
+    sy = y0 + r*math.sin(s0)
+    xs, ys = cms(sx, sy)    
+    ctx.move_to(xs, ys)
+    ctx.arc(x, y, r0, s0, e0)
 
 
 def draw_pin(ctx, x, y, length, orient):
@@ -81,16 +83,19 @@ draw_line(ctx, 0, -100,  0, -80)
 draw_line(ctx, 0, -70,  0, -50)
 draw_line(ctx, 50, -150,  -50, -150)
 
+draw_pin(ctx, -450, 0, 300, 'R')
+draw_pin(ctx, 450, 0, 300, 'L')
+
+# Придумавшего этот формат надо посадить на кол
+# A 0 -150 50 -1799 -1 0 1 0 N -50 -150 50 -150
+draw_arc(ctx, 0, -150, 50, 0, -2, 0, 0)
+
 # draw_arc(ctx, -150, 50, 50, 0, 1)
 # ctx.move_to(0.75, 0.5)
 # ctx.arc(0.5, 0.5, 0.25, 0, math.pi/2)
 
 # ctx.scale(WIDTH, HEIGHT)
 
-# Придумавшего этот формат надо посадить на кол
-# A 0 -150 50 -1799 -1 0 1 0 N -50 -150 50 -150
-draw_arc(ctx, 0, -150, 50, -1, 0, -50, -150)
-draw_arc(ctx, 0, -150, 50, 0, 1, 0, -200)
 
 
 ctx.set_source_rgb(0.3, 0.2, 0.5)  # Solid color
@@ -100,8 +105,7 @@ ctx.stroke()
 # draw_point(ctx, -50, -150)
 # draw_point(ctx, 0,-150)
 
-draw_pin(ctx, -450, 0, 300, 'R')
-draw_pin(ctx, 450, 0, 300, 'L')
+#draw_arc(ctx, 0, -150, 50, 0, 0.5)
 
 
 # Применение покраски на только что отрисованные детали
