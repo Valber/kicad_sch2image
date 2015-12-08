@@ -1,7 +1,17 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
+
 Draw simple
+#
+# ATU_Contact_Tr
+#
+DEF ATU_Contact_Tr K 0 40 Y Y 1 F N
+F0 "K" -370 -120 60 H V C CNN
+F1 "ATU_Contact_Tr" 500 -100 60 H V C CNN
+F2 "" 0 0 60 H V C CNN
+F3 "" 0 0 60 H V C CNN
+DRAW
 A 0 -150 50 -1799 -1 0 1 0 N -50 -150 50 -150
 P 3 0 1 0  -150 -100  150 0  150 0 N
 P 3 0 1 0  -150 -25  -150 0  -150 0 N
@@ -12,11 +22,13 @@ P 3 0 1 5  0 -70  0 -50  0 -50 N
 P 4 0 1 0  50 -150  -50 -150  -50 -150  -50 -150 N
 X ~ 1 -450 0 300 R 50 50 1 1 P
 X ~ 2 450 0 300 L 50 50 1 1 P
+ENDDRAW
+ENDDEF
 """
 import math
 import cairo
 
-WIDTH, HEIGHT = 1000, 1000
+WIDTH, HEIGHT = 2000, 1000
 
 
 def cms(x, y):
@@ -53,7 +65,7 @@ def draw_arc(ctx, x0, y0, r, start_angle, stop_angle, sx, sy):
     x, y = cms(x0, y0)
     s0 = math.pi/2 * (start_angle)
     e0 = math.pi/2 * (stop_angle)
-    print(s0, e0)
+    # print(s0, e0)
     sx = x0 + r*math.cos(s0)
     sy = y0 + r*math.sin(s0)
     xs, ys = cms(sx, sy)
@@ -85,5 +97,22 @@ draw_arc(ctx, 0, -150, 50, 0, -2, 0, 0)
 # Применение покраски на только что отрисованные детали
 # ctx.set_source_rgb(0.5, 0.0, 0.5)  # Solid color
 ctx.stroke()
+
+ctx.set_source_rgb(0, 132/255, 132/255)
+ctx.select_font_face("sans",
+                     cairo.FONT_SLANT_NORMAL,
+                     cairo.FONT_WEIGHT_NORMAL)
+ctx.set_font_size(60)
+
+
+x, y = cms(500/2, -100)
+ctx.move_to(x, y)
+ctx.show_text("ATU_Contact_Tr")
+
+x, y = cms(-370, -100)
+ctx.move_to(x, y)
+ctx.show_text("K")
+
+
 
 svg.finish()
