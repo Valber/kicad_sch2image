@@ -76,7 +76,8 @@ def draw_arc(ctx, x0, y0, r, start_angle, stop_angle, sx, sy):
 svg = cairo.SVGSurface("example2.svg", WIDTH, HEIGHT)
 ctx = cairo.Context(svg)
 
-ctx.set_line_width(10)
+ctx.set_line_width(8)
+ctx.set_line_cap(cairo.LINE_CAP_ROUND)  # TODO: Пунктир без закруглений
 ctx.set_source_rgb(150/255, 0, 0)
 
 draw_line(ctx, -150, -100, 150, 0)
