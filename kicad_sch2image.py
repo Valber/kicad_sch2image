@@ -6,6 +6,8 @@ simple story
 import sys
 import getopt
 import re
+import cairo
+from kicad_sch2pic import draw_line
 
 
 def main():
@@ -25,6 +27,8 @@ def main():
     # FIXME: Для теста поместим сюда жесткую ссылку
     start_path = "/home/valber/forge/unitbiotech/grow2_0.sch"
     lib_path = start_path[:-4]+"-cache.lib"
+    page_height = 1000
+    page_width = 1000
     print("Target : %s" % start_path)
     t = False
     with open(start_path) as infile:
@@ -33,7 +37,11 @@ def main():
                 print(line)
             if re.match("EESchema Schematic File Version 2\s*", line):
                 t = True
-
+            if re.match("\$Descr\s+[\s\d\w]*", line):
+                page = re.split("\s", line)
+                page_width = int(page[2])
+                page_height = int(page[3])
+                print("Page format %s : %i x %i" % (page[1], page_width, page_height))
     if not t:
         print("Don't find correct EESchematic File Version")
         sys.exit(0)
@@ -50,6 +58,40 @@ def main():
             # того что в некоторых версиях они после версии дату пишут.
 
     library_component = {}      # название : текст компонента
+
+    outfile = cairo.ImageSurface(cairo.FORMAT_ARGB32, page_width, page_height)
+    ctx = cairo.Context(outfile)
+    # Рисуем страницу
+    ctx.set_source_rgb(1, 1, 1)
+    ctx.set_line_width(6)
+    ctx.rectangle(0, 0, page_width, page_height)
+    ctx.fill()
+    ctx.set_line_cap(cairo.LINE_CAP_ROUND)  # TODO: Пунктир без закруглений
+
+    with open(start_path) as infile:
+        ctx.set_source_rgb(0, float(143)/255, 0)
+        t = False
+        for line in infile:
+            if t:
+                l = re.split("\s+", line)
+                draw_line(ctx, int(l[1]), int(l[2]), int(l[3]), int(l[4]))
+                t = False
+            if re.match("Wire Wire Line", line):
+                t = True
+
+    # draw_line(ctx, -250, -100, 250, 0)
+    # draw_line(ctx, -250, 0, 250, 0)
+    ctx.stroke()
+    # ctx.set_source_rgb(0, 132/255, 132/255)
+    # ctx.select_font_face("sans",
+    #                      cairo.FONT_SLANT_NORMAL,
+    #                      cairo.FONT_WEIGHT_NORMAL)
+    # ctx.set_font_size(60)
+
+    # ctx.move_to(500, 500)
+    # ctx.show_text("ATU_Contact_Tr")
+
+    outfile.write_to_png("example_sheet.png")
 
 if __name__ == "__main__":
     main()
