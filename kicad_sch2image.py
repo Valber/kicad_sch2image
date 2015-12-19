@@ -82,12 +82,12 @@ def main():
     ctx.set_source_rgb(1, 1, 1)
     ctx.rectangle(0, 0, page_width, page_height)
     ctx.fill()
-    ctx.set_line_cap(cairo.LINE_CAP_ROUND)  # TODO: Пунктир без закруглений
 
     with open(start_path) as infile:
         ctx.set_source_rgb(0, float(143)/255, 0)
         ctx.set_line_width(8)
         t = False
+        shet_t = False
         for line in infile:
             # Search and draw Wires
             if t:
@@ -106,6 +106,23 @@ def main():
                 ctx.move_to(xc, yc)
                 ctx.arc(xc, yc, r, 0, 2*math.pi)
                 ctx.fill()
+
+            if shet_t:
+                if re.match("S\s+[\d\w\s]*", line):
+                    data = re.split("\s+", line)
+                    print(data)
+                    ctx.save()
+                    ctx.set_source_rgb(float(147)/255, 0, float(147)/255)
+                    x1 = int(data[1])
+                    y1 = int(data[2])
+                    x2 = int(data[3])
+                    y2 = int(data[4])
+                    ctx.rectangle(x1, y1, x2, y2)
+                    ctx.stroke()
+                    ctx.restore()
+                    shet_t = False
+            if re.match("\$Sheet", line):
+                shet_t = True
 
     with open(start_path) as infile:
         ctx.set_line_width(12)
