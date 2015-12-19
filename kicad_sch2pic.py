@@ -72,22 +72,21 @@ def draw_pin(ctx, x, y, length, orient, x0=0, y0=0):
     return
 
 
-def draw_arc(ctx, xc, yc, r, start_angle, stop_angle, sx, sy, x0=0, y0=0):
+def draw_arc(ctx, xc, yc, r, start_angle, stop_angle, x0=0, y0=0):
     """Рисуем арку
     draw_arc(ctx, xc, yc, r, start_angle, stop_angle, sx, sy, x0=0, y0=0)
     xc,yc - координаты центра арки
     r - радиус
     start_angle - стартовый угл(0 на трех часах + против часовой)
+    В кисад углы заданы в 0,1 градуса т.е. 1800 - это pi
     sx,sy - FIXME:  альтернативное задание арки
     x0,y0 - центр относительной системы координат
     """
     x, y = cms(xc, yc, x0, y0)
-    s0 = math.pi/2 * (start_angle)
-    e0 = math.pi/2 * (stop_angle)
-    # print(s0, e0)
-    sx = xc + r*math.cos(s0)
-    sy = yc + r*math.sin(s0)
-    xs, ys = cms(sx, sy, x0, y0)
+    s0 = math.pi/1800 * (start_angle) + math.pi/2
+    e0 = math.pi/1800 * (stop_angle) + math.pi/2
+    xs = x + r*math.cos(s0)
+    ys = y + r*math.sin(s0)
     ctx.move_to(xs, ys)
     ctx.arc(x, y, r, s0, e0)
 
@@ -104,20 +103,20 @@ def draw_comp(ctx, text, x0=0, y0=0):
 
     for line in re.split('\n', text):
         if re.match("A\s+[\w\d]*\s+[\w\d\s]*", line):
-            pass
-            # data = re.split("\s+", line)
-            # xc = int(data[1])
-            # yc = int(data[2])
-            # r = int(data[3])
-            # draw_arc(ctx, xc, yc, r, int(data[4]), int(data[5]),
-            #          int(data[6]), int(data[7]), x0, y0)
+            data = re.split("\s+", line)
+            xc = int(data[1])
+            yc = int(data[2])
+            r = int(data[3])
+            draw_arc(ctx, xc, yc, r, int(data[4]), int(data[5]), x0, y0)
+            if data[-5] == 'F':
+                ctx.fill()
+            else:
+                ctx.stroke()
         if re.match("P\s+[\w\d]*\s+[\w\d\s]*", line):
             data = re.split("\s+", line)
-            #print("Data: %s" % str(data))
             x1 = int(data[5])
             y1 = int(data[6])
             x, y = cms(x1, y1, x0, y0)
-            print(5,x1,y1,x,y)
             ctx.move_to(x, y)
             for i in range(int(data[1])-1):
                 num = (i+1)*2+5
@@ -125,17 +124,46 @@ def draw_comp(ctx, text, x0=0, y0=0):
                 y2 = int(data[num+1])
                 x, y = cms(x2, y2, x0, y0)
                 ctx.line_to(x, y)
-                print(num,x2,y2,x,y)
-            print("========================")
-        if re.match("X\s+[\w\d]*\s+[\w\d\s]*", line):
-            pass
-            # data = re.split("\s+", line)
-            # x = int(data[3])
-            # y = int(data[4])
-            # length = int(data[5])
-            # symbol = data[6]
-            # draw_pin(ctx, x, y, length, symbol, x0, y0)
-    ctx.stroke()
+            # TODO: Thickness option
+            if data[-1] == 'F':
+                ctx.fill()
+            else:
+                ctx.stroke()
+
+        if re.match("X\s+[\w\d\s]*", line):
+            data = re.split("\s+", line)
+            x = int(data[3])
+            y = int(data[4])
+            length = int(data[5])
+            symbol = data[6]
+            draw_pin(ctx, x, y, length, symbol, x0, y0)
+            # TODO: Draw pin ma,e and number
+            ctx.stroke()
+        if re.match("C\s+[\w\d]*\s+[\w\d\s]*", line):
+            data = re.split("\s+", line)
+
+            xc = int(data[1])
+            yc = int(data[2])
+            r = int(data[3])
+            x, y = cms(xc, yc, x0, y0)
+            ctx.move_to(x + r*math.cos(0), y + r*math.sin(0))
+            ctx.arc(x, y, r, 0, 2*math.pi)
+            if data[-1] == 'F':
+                ctx.fill()
+            else:
+                ctx.stroke()
+
+        if re.match("S\s+[\w\d\s]*", line):
+            data = re.split("\s+", line)
+            x1, y1 = cms(int(data[1]), int(data[2]), x0, y0)
+            x2, y2 = cms(int(data[3]), int(data[4]), x0, y0)
+            # Rectangle(x1,y2 point, xlength, ylength)
+            ctx.rectangle(x1, y1, x2-x1, y2-y1)
+            if data[-1] == 'F':
+                ctx.fill()
+            else:
+                ctx.stroke()
+
     #ctx.restore()
 
 

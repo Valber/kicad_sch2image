@@ -97,43 +97,41 @@ def main():
                 t = True
         ctx.stroke()
 
-    # with open(start_path) as infile:
-    #     ctx.set_line_width(12)
-    #     ctx.set_line_cap(cairo.LINE_CAP_ROUND)  # TODO: Пунктир без закруглений
-    #     ctx.set_source_rgb(float(150)/255, 0, 0)
-    #     comp_t = False
-    #     comp_name = ""
-    #     comp_x = 0
-    #     comp_y = 0
-    #     for line in infile:
-    #         if comp_t:
-    #             if re.match("L\s+[\w\d]*\s+[\w\d\s]*", line):
-    #                 comp_name = re.split("\s+", line)[1]
-    #                 print(comp_name)
-    #             if re.match("P\s+[\w\d]*\s+[\w\d\s]*", line):
-    #                 comp_x = int(re.split("\s+", line)[1])
-    #                 comp_y = int(re.split("\s+", line)[2])
-    #         if re.match("\$Comp", line):
-    #             comp_t = True
-    #         # Search component
-    #         if re.match("\$EndComp", line):
-    #             comp_t = False
-    #             draw_comp(ctx, library_component[comp_name], comp_x, comp_y)
-    #             comp_name = ""
-    #             comp_x = 0
-    #             comp_y = 0
+    with open(start_path) as infile:
+        ctx.set_line_width(12)
+        ctx.set_line_cap(cairo.LINE_CAP_ROUND)  # TODO: Пунктир без закруглений
+        ctx.set_source_rgb(float(150)/255, 0, 0)
+        comp_t = False
+        comp_name = ""
+        comp_x = 0
+        comp_y = 0
+        for line in infile:
+            if comp_t:
+                if re.match("L\s+[\w\d]*\s+[\w\d\s]*", line):
+                    comp_name = re.split("\s+", line)[1]
+                    print(comp_name)
+                if re.match("P\s+[\w\d]*\s+[\w\d\s]*", line):
+                    comp_x = int(re.split("\s+", line)[1])
+                    comp_y = int(re.split("\s+", line)[2])
+            if re.match("\$Comp", line):
+                comp_t = True
+            # Search component
+            if re.match("\$EndComp", line):
+                comp_t = False
+                draw_comp(ctx, library_component[comp_name], comp_x, comp_y)
+                comp_name = ""
+                comp_x = 0
+                comp_y = 0
 
-    # FIXME: Тест работы отрисовщика компонент
-    ctx.set_line_width(12)
-    ctx.set_line_cap(cairo.LINE_CAP_ROUND)
-    ctx.set_source_rgb(float(150)/255, 0, 0)
-    draw_comp(ctx, library_component["M_CC"], 10200, 1000)
-    print(library_component["M_CC"])
+    # # FIXME: Тест работы отрисовщика компонент
+    # ctx.set_line_width(12)
+    # ctx.set_line_cap(cairo.LINE_CAP_ROUND)
+    # ctx.set_source_rgb(float(150)/255, 0, 0)
+    # draw_comp(ctx, library_component["M_CC"], 10200, 1000)
+    # print(library_component["M_CC"])
 
     ctx.set_source_rgb(0, 1, 0)
     ctx.set_line_width(8)
-    draw_line(ctx, 2500, 1000, 2500, 5000)
-    draw_line(ctx, 2500, 0, 2500, 4000)
     ctx.stroke()
     # ctx.set_source_rgb(0, 132/255, 132/255)
     # ctx.select_font_face("sans",
