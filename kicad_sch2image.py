@@ -7,6 +7,7 @@ import sys
 import getopt
 import re
 import cairo
+import math
 from kicad_sch2pic import draw_line, draw_comp
 
 
@@ -92,10 +93,19 @@ def main():
             if t:
                 l = re.split("\s+", line)
                 draw_line(ctx, int(l[1]), int(l[2]), int(l[3]), int(l[4]))
+                ctx.stroke()
                 t = False
             if re.match("Wire Wire Line", line):
                 t = True
-        ctx.stroke()
+
+            if re.match("Connection ~[\w\s\d]*", line):
+                data = re.split("\s+", line)
+                xc = int(data[-3])
+                yc = int(data[-2])
+                r = 20              # FIXME: Magic number
+                ctx.move_to(xc, yc)
+                ctx.arc(xc, yc, r, 0, 2*math.pi)
+                ctx.fill()
 
     with open(start_path) as infile:
         ctx.set_line_width(12)
@@ -123,7 +133,7 @@ def main():
                 comp_x = 0
                 comp_y = 0
 
-    # # FIXME: Тест работы отрисовщика компонент
+    # FIXME: Тест работы отрисовщика компонент
     # ctx.set_line_width(12)
     # ctx.set_line_cap(cairo.LINE_CAP_ROUND)
     # ctx.set_source_rgb(float(150)/255, 0, 0)
