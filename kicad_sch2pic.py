@@ -59,16 +59,62 @@ def draw_line(ctx, x1, y1, x2, y2, x0=0, y0=0):
     return
 
 
-def draw_pin(ctx, x, y, length, orient, x0=0, y0=0):
+def draw_pin(ctx, x, y, length, orient, font_data, x0=0, y0=0):
     """Отрисовка вывода компнента
     """
+    print(font_data)
+    lab = font_data[0]
+    num = font_data[1]
+    lab_size = font_data[2]
+    num_size = font_data[3]
+
     if orient == 'L':
         xe = x - length
         ye = y
-    else:
+        x_lab = xe - lab_size/2
+        y_lab = ye - lab_size/2
+        x_num = x - length/2
+        y_num = y + num_size/4
+    elif orient == 'R':
         xe = x + length
         ye = y
+        x_lab = xe + lab_size/2
+        y_lab = ye - lab_size/2
+        x_num = x + length/2
+        y_num = y + num_size/4
+    elif orient == 'D':         # TODO: доделать поддержку верт пинов
+        xe = x
+        ye = y - length
+        x_lab = xe - lab_size/2
+        y_lab = ye - lab_size/2
+        x_num = x + length/2
+        y_num = y - num_size/4
+    else:
+        xe = x
+        ye = y + length
+        x_lab = xe - lab_size/2
+        y_lab = ye - lab_size/2
+        x_num = x + length/2
+        y_num = y - num_size/4
     draw_line(ctx, x, y, xe, ye, x0, y0)
+    ctx.stroke()
+    ctx.select_font_face("sans",
+                         cairo.FONT_SLANT_NORMAL,
+                         cairo.FONT_WEIGHT_NORMAL)
+    if num != '~':
+        ctx.set_font_size(num_size)
+        x_num, y_num = cms(x_num, y_num, x0, y0)
+        ctx.move_to(x_num, y_num)
+        ctx.show_text(num)
+    if lab != '~':
+        ctx.save()
+        ctx.set_source_rgb(0, 132/float(255), 132/float(255))
+        ctx.set_font_size(lab_size)
+        x_lab, y_lab = cms(x_lab, y_lab, x0, y0)
+        ctx.move_to(x_lab, y_lab)
+        ctx.show_text(lab)
+        ctx.restore()
+
     return
 
 
@@ -146,9 +192,9 @@ def draw_comp(ctx, text, x0=0, y0=0):
             y = int(data[4])
             length = int(data[5])
             symbol = data[6]
-            draw_pin(ctx, x, y, length, symbol, x0, y0)
+            textdata = [data[1], data[2], int(data[8]), int(data[7])]
+            draw_pin(ctx, x, y, length, symbol, textdata, x0, y0)
             # TODO: Draw pin ma,e and number
-            ctx.stroke()
         if re.match("C\s+[\w\d]*\s+[\w\d\s]*", line):
             data = re.split("\s+", line)
 
