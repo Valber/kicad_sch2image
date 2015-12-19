@@ -81,10 +81,20 @@ def draw_arc(ctx, xc, yc, r, start_angle, stop_angle, x0=0, y0=0):
     В кисад углы заданы в 0,1 градуса т.е. 1800 - это pi
     sx,sy - FIXME:  альтернативное задание арки
     x0,y0 - центр относительной системы координат
+
+    Нарисовать арку по двум углам можнодвумя способами
+    в KiCAD это неопределенность разрешена тем что арку больше 180 не нарисуеш
+    в Cairo тем что арка ВСЕГДА рисуется по часовой
     """
+    str_a = - start_angle/float(10)
+    stp_a = - stop_angle/float(10)
+
+    if (abs(str_a - stp_a) > 180) or (str_a > stp_a):
+        str_a, stp_a = stp_a, str_a
+
     x, y = cms(xc, yc, x0, y0)
-    s0 = math.pi/1800 * (start_angle) + math.pi/2
-    e0 = math.pi/1800 * (stop_angle) + math.pi/2
+    s0 = math.pi/180 * str_a
+    e0 = math.pi/180 * stp_a
     xs = x + r*math.cos(s0)
     ys = y + r*math.sin(s0)
     ctx.move_to(xs, ys)
