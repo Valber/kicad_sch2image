@@ -94,7 +94,7 @@ def draw_pin(ctx, x, y, length, orient, font_data, x0=0, y0=0):
         # dif = (sz[1] + sz[3])
         ctx.move_to(x_num - sz[2]/2, y_num - abs(sz[1]))
         ctx.show_text(num)
-    if lab != '~':
+    if lab != '~' and font_data[4]:
         ctx.set_source_rgb(0, 132/float(255), 132/float(255))
         ctx.set_font_size(lab_size)
         sz = ctx.text_extents(lab)  # Text Rectangle
@@ -153,6 +153,12 @@ def draw_comp(ctx, text, component_matrix, x0=0, y0=0):
     mtx = ctx.get_matrix()
     ctx.translate(x0, y0)
     ctx.scale(1, -1)
+    label_flag = True
+    for line in re.split('\n', text):
+        if re.match("DEF\s+[\w\d]*\s+[\w\d\s]*", line):
+            data = re.split("\s+", line)
+            if data[-4] == 'N':  # Invisible pin label
+                label_flag = False
 
     for line in re.split('\n', text):
         if re.match("A\s+[\w\d]*\s+[\w\d\s]*", line):
@@ -187,8 +193,9 @@ def draw_comp(ctx, text, component_matrix, x0=0, y0=0):
             y = int(data[4])
             length = int(data[5])
             symbol = data[6]
-            textdata = [data[1], data[2], int(data[8]), int(data[7])]
-            draw_pin(ctx, x, y, length, symbol, textdata)
+            textdata = [data[1], data[2], int(data[8]), int(data[7]), label_flag]
+            if data[-2] != 'W':  # Invisible pin
+                draw_pin(ctx, x, y, length, symbol, textdata)
             # print("Textdata: %s" % str(textdata))
             # TODO: Draw pin ma,e and number
         if re.match("C\s+[\w\d]*\s+[\w\d\s]*", line):
