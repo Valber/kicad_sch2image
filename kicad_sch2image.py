@@ -140,6 +140,19 @@ def main():
                 if re.match("P\s+[\w\d]*\s+[\w\d\s]*", line):
                     comp_x = int(re.split("\s+", line)[1])
                     comp_y = int(re.split("\s+", line)[2])
+                if re.match("F\s+[\w\d\s]*", line):
+                    data = re.split("\s+", line)
+                    print(data)
+                    ctx.select_font_face("sans",
+                                         cairo.FONT_SLANT_NORMAL,
+                                         cairo.FONT_WEIGHT_NORMAL)
+                    ctx.save()
+                    ctx.set_font_size(int(data[6]))
+                    ctx.set_source_rgb(0, 132/float(255), 132/float(255))
+                    ctx.move_to(int(data[4]), int(data[5]))
+                    ctx.show_text(str(data[2]).replace('"', ''))
+                    ctx.restore()
+
             if re.match("\$Comp", line):
                 comp_t = True
             # Search component
