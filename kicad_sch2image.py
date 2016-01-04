@@ -78,7 +78,7 @@ def main():
 
     outfile = cairo.ImageSurface(cairo.FORMAT_ARGB32, page_width, page_height)
     ctx = cairo.Context(outfile)
-    # Рисуем страницу
+    # Рисуем страницуб необязательно но на прозрачный альфа канал смотреть неудобно
     ctx.set_source_rgb(1, 1, 1)
     ctx.rectangle(0, 0, page_width, page_height)
     ctx.fill()
@@ -98,7 +98,7 @@ def main():
             if re.match("Wire Wire Line", line):
                 t = True
 
-            if re.match("Connection ~[\w\s\d]*", line):
+            if re.match("Connection ~[\w\s\d]*", line):  # Draw Connection
                 data = re.split("\s+", line)
                 xc = int(data[-3])
                 yc = int(data[-2])
@@ -107,7 +107,7 @@ def main():
                 ctx.arc(xc, yc, r, 0, 2*math.pi)
                 ctx.fill()
 
-            if shet_t:
+            if shet_t:          # Draw Sheet
                 if re.match("S\s+[\d\w\s]*", line):
                     data = re.split("\s+", line)
                     print(data)
@@ -134,13 +134,18 @@ def main():
         comp_y = 0
         for line in infile:
             if comp_t:
-                if re.match("L\s+[\w\d]*\s+[\w\d\s]*", line):
+                if re.match("L\s+[\w\d]*\s+[\w\d\s]*", line):  # Search Search Comp
                     comp_name = re.split("\s+", line)[1]
                     print(comp_name)
-                if re.match("P\s+[\w\d]*\s+[\w\d\s]*", line):
+                if re.match("P\s+[\w\d]*\s+[\w\d\s]*", line):  # Search Comp Position
                     comp_x = int(re.split("\s+", line)[1])
                     comp_y = int(re.split("\s+", line)[2])
-                if re.match("F\s+[\w\d\s]*", line):
+                    # Get transformation matrix
+                if re.match('\s+[-10]+\s+[-10]+\s+[-10]+\s+[-10]+\s+', line):
+                    data = re.split("\s+", line)
+                    print("Transform matrix: %s" % str(data[1:-1]))
+                    comp_mtx = data[1:-1]
+                if re.match("F\s+[\w\d\s]*", line):  # Draw Field
                     data = re.split("\s+", line)
                     print(data)
                     ctx.select_font_face("sans",
@@ -156,9 +161,9 @@ def main():
             if re.match("\$Comp", line):
                 comp_t = True
             # Search component
-            if re.match("\$EndComp", line):
+            if re.match("\$EndComp", line):  # Draw Comp
                 comp_t = False
-                draw_comp(ctx, library_component[comp_name], comp_x, comp_y)
+                draw_comp(ctx, library_component[comp_name], comp_mtx, comp_x, comp_y)
                 comp_name = ""
                 comp_x = 0
                 comp_y = 0

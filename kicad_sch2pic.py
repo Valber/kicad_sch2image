@@ -147,7 +147,7 @@ def draw_arc(ctx, xc, yc, r, start_angle, stop_angle, x0=0, y0=0):
     ctx.arc(x, y, r, s0, e0)
 
 
-def draw_comp(ctx, text, x0=0, y0=0):
+def draw_comp(ctx, text, component_matrix, x0=0, y0=0):
     """Draw Component from lib
     Хорошо что позиции текста указываются в sch в
     абсолютных координатах
