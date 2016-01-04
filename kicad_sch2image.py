@@ -143,11 +143,11 @@ def main():
                     # Get transformation matrix
                 if re.match('\s+[-10]+\s+[-10]+\s+[-10]+\s+[-10]+\s+', line):
                     data = re.split("\s+", line)
-                    print("Transform matrix: %s" % str(data[1:-1]))
+                    # print("Transform matrix: %s" % str(data[1:-1]))
                     comp_mtx = data[1:-1]
                 if re.match("F\s+[\w\d\s]*", line):  # Draw Field
                     data = re.split("\s+", line)
-                    print(data)
+                    # print(data)
                     ctx.select_font_face("sans",
                                          cairo.FONT_SLANT_NORMAL,
                                          cairo.FONT_WEIGHT_NORMAL)
