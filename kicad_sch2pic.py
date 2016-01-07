@@ -54,6 +54,9 @@ def draw_line(ctx, x1, y1, x2, y2, x0=0, y0=0):
 def draw_pin(ctx, x, y, length, orient, font_data, x0=0, y0=0):
     """Отрисовка вывода компнента
     """
+    # TODO: доделать поддержку верт пинов
+    mtx = ctx.get_matrix()
+
     lab = font_data[0]
     num = font_data[1]
     lab_size = font_data[2]
@@ -70,8 +73,7 @@ def draw_pin(ctx, x, y, length, orient, font_data, x0=0, y0=0):
         y_lab = 0.0
         x_num = 0.0 + length/2
         y_num = 0.0
-    # TODO: доделать поддержку верт пинов
-    mtx = ctx.get_matrix()
+
     ctx.translate(x, y)
     if orient == 'U':
         ctx.rotate(math.pi/2)
@@ -81,6 +83,7 @@ def draw_pin(ctx, x, y, length, orient, font_data, x0=0, y0=0):
     ctx.move_to(0, 0)
     ctx.line_to(length, 0)
     ctx.stroke()
+
     fnt_clr = ctx.get_font_options()
     fnt_mtx = ctx.get_font_matrix()
     clr_mtx = ctx.get_source()
@@ -89,58 +92,77 @@ def draw_pin(ctx, x, y, length, orient, font_data, x0=0, y0=0):
                          cairo.FONT_WEIGHT_NORMAL)
     # When Transformation
     mtx2 = ctx.get_matrix()
-
-    if abs(mtx[0]) >= float(1):
-        y_vect = float(mtx[3])
-        x_vect = float(mtx[0])
-        rotate_flag = -1
-    else:
-        y_vect = float(mtx[2])
-        x_vect = float(mtx[1])
-        rotate_flag = 1
-
     if num != '~':
+        xx = mtx2[0]
+        xy = mtx2[1]
+        yx = mtx2[2]
+        yy = mtx2[3]
+        scale_x = math.sqrt(xx * xx + xy * xy)
+        scale_y = math.sqrt(yx * yx + yy * yy)
+        xx = int(xx/scale_x)
+        xy = int(xy/scale_x)
+        yx = int(yx/scale_y)
+        yy = int(yy/scale_y)
+
+        ctx.translate(x_num, y_num)
+        if xx == 0:
+            if xy == 1:
+                ctx.scale(-1, 1)
+                xy = -1
+            if yx != 1:
+                ctx.scale(1, -1)
+                yx = 1
+        else:
+            if xx == -1:
+                ctx.scale(-1, 1)
+                xx = 1
+            if yy != 1:
+                ctx.scale(1, -1)
+                yy = 1
+
         ctx.set_font_size(num_size)
         sz = ctx.text_extents(num)  # Text Rectangle
         # dif = (sz[1] + sz[3])
-        ctx.move_to(x_num + x_vect * rotate_flag * sz[2]/2, y_num + y_vect * sz[1])
-        if (abs(mtx[0]) >= float(1)):
-            if y_vect < 0.0:
-                ctx.scale(1, -1)
-            if x_vect < 0.0:
-                ctx.scale(-1, 1)
-        else:
-            if y_vect < 0.0:
-                ctx.scale(1, -1)
-            if x_vect > 0.0:
-                ctx.scale(-1, 1)
-        print(ctx.get_matrix())
-        print(num)
-        print("=========")
+
+        ctx.move_to((xy-xx)*sz[2]/2, (yy + yx)*sz[1])
         ctx.show_text(num)
         ctx.set_matrix(mtx2)
     if lab != '~' and font_data[4]:
+        ctx.set_matrix(mtx2)
+        xx = mtx2[0]
+        xy = mtx2[1]
+        yx = mtx2[2]
+        yy = mtx2[3]
+        scale_x = math.sqrt(xx * xx + xy * xy)
+        scale_y = math.sqrt(yx * yx + yy * yy)
+        xx = int(xx/scale_x)
+        xy = int(xy/scale_x)
+        yx = int(yx/scale_y)
+        yy = int(yy/scale_y)
+
         ctx.set_source_rgb(0, 132/float(255), 132/float(255))
         ctx.set_font_size(lab_size)
         sz = ctx.text_extents(lab)  # Text Rectangle
-        ctx.translate(x_lab, y_lab)
-        if orient == 'R' or orient == 'U':
-            ctx.move_to(sz[2]*0.5, -abs(sz[3])/2)
+        if length > 0:
+            ctx.translate(x_lab+sz[2], y_lab)
         else:
-            ctx.move_to(-sz[2]*1.5, -abs(sz[3])/2)
-
-        if (abs(mtx[0]) >= float(1)):
-            if y_vect < 0.0:
-                ctx.scale(1, -1)
-            if x_vect < 0.0:
+            ctx.translate(x_lab-sz[2], y_lab)
+        if xx == 0:
+            if xy == 1:
                 ctx.scale(-1, 1)
+                xy = -1
+            if yx != 1:
+                ctx.scale(1, -1)
+                yx = 1
         else:
-            pass
-            # if y_vect < 0.0:
-            #     ctx.scale(1, -1)
-            # if x_vect > 0.0:
-            #     ctx.scale(-1, 1)
+            if xx == -1:
+                ctx.scale(-1, 1)
+                xx = 1
+            if yy != 1:
+                ctx.scale(1, -1)
+                yy = 1
 
+        ctx.move_to(-xx*sz[2]*0.5 + xy*0.5*sz[2], abs(sz[3])/2)
         ctx.show_text(lab)
         ctx.set_font_matrix(fnt_mtx)
         ctx.set_font_options(fnt_clr)
