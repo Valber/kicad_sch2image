@@ -136,14 +136,14 @@ def main():
             if comp_t:
                 if re.match("L\s+[\w\d]*\s+[\w\d\s]*", line):  # Search Search Comp
                     comp_name = re.split("\s+", line)[1]
-                    print(comp_name)
+                    print(line)
                 if re.match("P\s+[\w\d]*\s+[\w\d\s]*", line):  # Search Comp Position
                     comp_x = int(re.split("\s+", line)[1])
                     comp_y = int(re.split("\s+", line)[2])
                     # Get transformation matrix
                 if re.match('\s+[-10]+\s+[-10]+\s+[-10]+\s+[-10]+\s+', line):
                     data = re.split("\s+", line)
-                    # print("Transform matrix: %s" % str(data[1:-1]))
+                    print("Transform matrix: %s" % str(data[1:-1]))
                     comp_mtx = data[1:-1]
                 if re.match("F\s+[\w\d\s]*", line):  # Draw Field
                     data = re.split("\s+", line)

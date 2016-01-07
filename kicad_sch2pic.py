@@ -87,21 +87,60 @@ def draw_pin(ctx, x, y, length, orient, font_data, x0=0, y0=0):
     ctx.select_font_face("sans",
                          cairo.FONT_SLANT_NORMAL,
                          cairo.FONT_WEIGHT_NORMAL)
-    ctx.scale(1, -1)            # Оставить здесь
+    # When Transformation
+    mtx2 = ctx.get_matrix()
+
+    if abs(mtx[0]) >= float(1):
+        y_vect = float(mtx[3])
+        x_vect = float(mtx[0])
+        rotate_flag = -1
+    else:
+        y_vect = float(mtx[2])
+        x_vect = float(mtx[1])
+        rotate_flag = 1
+
     if num != '~':
         ctx.set_font_size(num_size)
         sz = ctx.text_extents(num)  # Text Rectangle
         # dif = (sz[1] + sz[3])
-        ctx.move_to(x_num - sz[2]/2, y_num - abs(sz[1]))
+        ctx.move_to(x_num + x_vect * rotate_flag * sz[2]/2, y_num + y_vect * sz[1])
+        if (abs(mtx[0]) >= float(1)):
+            if y_vect < 0.0:
+                ctx.scale(1, -1)
+            if x_vect < 0.0:
+                ctx.scale(-1, 1)
+        else:
+            if y_vect < 0.0:
+                ctx.scale(1, -1)
+            if x_vect > 0.0:
+                ctx.scale(-1, 1)
+        print(ctx.get_matrix())
+        print(num)
+        print("=========")
         ctx.show_text(num)
+        ctx.set_matrix(mtx2)
     if lab != '~' and font_data[4]:
         ctx.set_source_rgb(0, 132/float(255), 132/float(255))
         ctx.set_font_size(lab_size)
         sz = ctx.text_extents(lab)  # Text Rectangle
+        ctx.translate(x_lab, y_lab)
         if orient == 'R' or orient == 'U':
-            ctx.move_to(x_lab + sz[2]*0.4, y_lab + abs(sz[3])/2)
+            ctx.move_to(sz[2]*0.5, -abs(sz[3])/2)
         else:
-            ctx.move_to(x_lab - sz[2]*1.4, y_lab + abs(sz[3])/2)
+            ctx.move_to(-sz[2]*1.5, -abs(sz[3])/2)
+
+        if (abs(mtx[0]) >= float(1)):
+            if y_vect < 0.0:
+                ctx.scale(1, -1)
+            if x_vect < 0.0:
+                ctx.scale(-1, 1)
+        else:
+            pass
+            # if y_vect < 0.0:
+            #     ctx.scale(1, -1)
+            # if x_vect > 0.0:
+            #     ctx.scale(-1, 1)
+
         ctx.show_text(lab)
         ctx.set_font_matrix(fnt_mtx)
         ctx.set_font_options(fnt_clr)
@@ -152,7 +191,19 @@ def draw_comp(ctx, text, component_matrix, x0=0, y0=0):
     # ctx.set_source_rgb(float(150)/255, 0, 0)
     mtx = ctx.get_matrix()
     ctx.translate(x0, y0)
-    ctx.scale(1, -1)
+    if int(component_matrix[0]) != 0:
+        x_vect = int(component_matrix[0])
+        y_vect = int(component_matrix[-1])
+        ctx.scale(x_vect, y_vect)
+    else:
+        x_vect = int(component_matrix[1])
+        y_vect = int(component_matrix[-2])
+        ctx.rotate(-math.pi/2)
+        ctx.scale(x_vect, y_vect)
+        if x_vect * y_vect > 0:
+            ctx.scale(-1, 1)
+        else:
+            ctx.scale(1, -1)
     label_flag = True
     for line in re.split('\n', text):
         if re.match("DEF\s+[\w\d]*\s+[\w\d\s]*", line):
