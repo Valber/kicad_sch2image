@@ -8,7 +8,7 @@ import getopt
 import re
 import cairo
 import math
-from kicad_sch2pic import draw_line, draw_comp, draw_field
+from kicad_sch2pic import draw_line, draw_comp, draw_field, draw_label
 
 
 def main():
@@ -88,6 +88,10 @@ def main():
         ctx.set_line_width(8)
         t = False
         shet_t = False
+
+        text_flag = False
+        data_string = ""
+        
         for line in infile:
             # Search and draw Wires
             if t:
@@ -98,7 +102,8 @@ def main():
             if re.match("Wire Wire Line", line):
                 t = True
 
-            if re.match("Connection ~[\w\s\d]*", line):  # Draw Connection
+            # Draw Connection
+            if re.match("Connection ~[\w\s\d]*", line):
                 data = re.split("\s+", line)
                 xc = int(data[-3])
                 yc = int(data[-2])
@@ -107,7 +112,17 @@ def main():
                 ctx.arc(xc, yc, r, 0, 2*math.pi)
                 ctx.fill()
 
-            if shet_t:          # Draw Sheet
+            # Draw Text Labels GLabels HLabels Notes
+            if text_flag:
+                draw_label(ctx, line[:-1], data_string)
+                text_flag = False
+            if re.match("Text [\w\s\d]*", line):
+                text_flag = True
+                data_string = re.split("\s+", line)
+                # Text GLabel 2750 750  0    60   Input ~ 0
+
+            # Draw Sheet
+            if shet_t:
                 if re.match("S\s+[\d\w\s]*", line):
                     data = re.split("\s+", line)
                     print(data)
@@ -143,14 +158,14 @@ def main():
                     comp_mtx = ['1', '0', '0', '-1']
                 if re.match("L\s+[\w\d]*\s+[\w\d\s]*", line):  # Search Search Comp
                     comp_name = re.split("\s+", line)[1]
-                    print(line)
+                    # print(line)
                 if re.match("P\s+[\w\d]*\s+[\w\d\s]*", line):  # Search Comp Position
                     comp_x = int(re.split("\s+", line)[1])
                     comp_y = int(re.split("\s+", line)[2])
                     # Get transformation matrix
                 if re.match('\s+[-10]+\s+[-10]+\s+[-10]+\s+[-10]+\s+', line):
                     data = re.split("\s+", line)
-                    print("Transform matrix: %s" % str(data[1:-1]))
+                    # print("Transform matrix: %s" % str(data[1:-1]))
                     comp_mtx = data[1:-1]
                     comp_matrix_disappear = False
                 if re.match("F\s+[\w\d\s]*", line):  # Draw Field

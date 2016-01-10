@@ -422,6 +422,185 @@ def draw_field(ctx, data_string, transf_mtx, comp_x=0, comp_y=0):
     ctx.set_font_options(cur_font)
     ctx.set_source(cur_color)
 
+
+def draw_label(ctx, text, data_string):
+    mtx = ctx.get_matrix()
+    cur_color = ctx.get_source()
+    cur_font = ctx.get_font_options()
+    ctx.select_font_face("sans",
+                         cairo.FONT_SLANT_NORMAL,
+                         cairo.FONT_WEIGHT_NORMAL)
+    text_height = int(data_string[5])
+    ctx.set_font_size(text_height)
+
+    text_type = data_string[1]
+    x = int(data_string[2])
+    y = int(data_string[3])
+    orient = int(data_string[4])
+    if orient == 2 or orient == 3:
+        x_shift = 1
+    else:
+        x_shift = 0
+
+    # Устанавливаем цвет
+    if text_type == "Notes":
+        ctx.set_source_rgb(0, 0, 194/float(255))
+    elif text_type == "GLabel":
+        ctx.set_source_rgb(float(150)/255, 0, 0)
+    elif text_type == "HLabel":
+        ctx.set_source_rgb(132/float(255), 132/float(255), 0)
+    else:
+        ctx.set_source_rgb(0, 0, 0)
+
+    # Перемещаемся в точку
+    ctx.translate(x, y)
+    if orient == 3 or orient == 1:
+        ctx.rotate(math.pi/2)
+
+    # Рисуем нечто
+    if text_type == "GLabel":
+        form = ctx.text_extents(text)
+        dif = text_height - abs(form[1])
+        label_height = text_height + dif
+        label_width = form[4] + dif/2
+        tre = label_height/(2 * math.tan(math.pi/3))
+        if orient == 0:
+            x_shift = -1
+            ctx.move_to(0 - tre - label_width + dif/4, 0 + label_height/2 - dif)
+            ctx.show_text(text)
+        elif orient == 2:
+            ctx.move_to(0 + tre + dif/4, 0 + label_height/2 - dif)
+            ctx.show_text(text)
+        else:
+            cur_mtx = ctx.get_matrix()
+            ctx.scale(-1, -1)
+            if orient == 3:
+                x_shift = 1
+                ctx.move_to(0 - tre - label_width + dif/4, 0 + label_height/2 - dif)
+                ctx.show_text(text)
+            else:
+                x_shift = -1
+                ctx.move_to(0 + tre + dif/4, 0 + label_height/2 - dif)
+                ctx.show_text(text)
+            ctx.set_matrix(cur_mtx)
+
+        el_type = data_string[6]
+        if el_type == "Input":
+            ctx.move_to(0, 0)
+            ctx.line_to(0 + x_shift * tre, label_height/2)
+            ctx.move_to(0, 0)
+            ctx.line_to(0 + x_shift * tre, 0 - label_height/2)
+            ctx.move_to(0 + x_shift * tre, 0 - label_height/2)
+            ctx.line_to(0 + x_shift * (2*tre + label_width), 0 - label_height/2)
+            ctx.line_to(0 + x_shift * (2*tre + label_width), 0 + label_height/2)
+            ctx.line_to(0 + x_shift * tre, 0 + label_height/2)
+        elif el_type == "Output":
+            ctx.move_to(0, 0)
+            ctx.line_to(0, label_height/2)
+            ctx.line_to(0 + x_shift * (tre + label_width), 0 + label_height/2)
+            ctx.line_to(0 + x_shift * (2*tre + label_width), 0)
+            ctx.line_to(0 + x_shift * (tre + label_width), 0 - label_height/2)
+            ctx.line_to(0, -label_height/2)
+            ctx.line_to(0, 0)
+        elif el_type == "UnSpc":
+            ctx.move_to(0, 0)
+            ctx.line_to(0, label_height/2)
+            ctx.line_to(0 + x_shift * (2*tre + label_width), 0 + label_height/2)
+            ctx.line_to(0 + x_shift * (2*tre + label_width), 0 - label_height/2)
+            ctx.line_to(0, -label_height/2)
+            ctx.line_to(0, 0)
+        else:
+            ctx.move_to(0, 0)
+            ctx.line_to(0 + x_shift * tre, label_height/2)
+            ctx.move_to(0, 0)
+            ctx.line_to(0 + x_shift * tre, 0 - label_height/2)
+            ctx.move_to(0 + x_shift * tre, 0 - label_height/2)
+            ctx.line_to(0 + x_shift * (tre + label_width), 0 - label_height/2)
+            ctx.line_to(0 + x_shift * (2*tre + label_width), 0)
+            ctx.line_to(0 + x_shift * (tre + label_width), 0 + label_height/2)
+            ctx.line_to(0 + x_shift * tre, 0 + label_height/2)
+        ctx.stroke()
+
+    elif text_type == "HLabel":
+        form = ctx.text_extents(text)
+        dif = text_height - abs(form[1])
+        label_height = text_height + dif
+        tre = text_height/(2 * math.tan(math.pi/4))
+        label_width = form[4] + dif/2 + 2*tre
+        if orient == 0:
+            x_shift = -1
+            ctx.move_to(0 - label_width + dif/4, 0 + label_height/2 - dif)
+            ctx.show_text(text)
+        elif orient == 2:
+            ctx.move_to(0 + 2*tre + dif/4, 0 + label_height/2 - dif)
+            ctx.show_text(text)
+        else:
+            cur_mtx = ctx.get_matrix()
+            ctx.scale(-1, -1)
+            if orient == 3:
+                x_shift = 1
+                ctx.move_to(0 - label_width + dif/4, 0 + label_height/2 - dif)
+                ctx.show_text(text)
+            else:
+                x_shift = -1
+                ctx.move_to(0 + 2*tre + dif/4, 0 + label_height/2 - dif)
+                ctx.show_text(text)
+            ctx.set_matrix(cur_mtx)
+
+        el_type = data_string[6]
+        if el_type == "Input":
+            ctx.move_to(0, 0)
+            ctx.line_to(0 + x_shift * tre, text_height/2)
+            ctx.line_to(0 + x_shift * 2 * tre, text_height/2)
+            ctx.line_to(0 + x_shift * 2 * tre, -text_height/2)
+            ctx.line_to(0 + x_shift * tre, -text_height/2)
+            ctx.line_to(0, 0)
+        elif el_type == "Output":
+            ctx.move_to(0, 0)
+            ctx.line_to(0, text_height/2)
+            ctx.line_to(0 + x_shift * tre, text_height/2)
+            ctx.line_to(0 + x_shift * 2 * tre, 0)
+            ctx.line_to(0 + x_shift * tre, -text_height/2)
+            ctx.line_to(0, -text_height/2)
+            ctx.line_to(0, 0)
+        elif el_type == "UnSpc":
+            ctx.move_to(0, 0)
+            ctx.line_to(0, text_height/2)
+            ctx.line_to(0 + x_shift * 2 * tre, text_height/2)
+            ctx.line_to(0 + x_shift * 2 * tre, -text_height/2)
+            ctx.line_to(0, -text_height/2)
+            ctx.line_to(0, 0)
+        else:
+            ctx.move_to(0, 0)
+            ctx.line_to(0 + x_shift * tre, text_height/2)
+            ctx.line_to(0 + x_shift * 2 * tre, 0)
+            ctx.line_to(0 + x_shift * tre, -text_height/2)
+            ctx.line_to(0, 0)
+        ctx.stroke()
+
+    elif text_type == "Notes":
+        cur_mtx = ctx.get_matrix()
+        lines = re.split('\\\\n', text)
+        lines.reverse()
+        if orient == 1 or orient == 3:
+            ctx.scale(-1, -1)
+        for i in range(len(lines)):
+            line_width = ctx.text_extents(lines[i])[4]
+            ctx.move_to(0 - x_shift*line_width, 0 - i*text_height)
+            ctx.show_text(lines[i])
+
+        ctx.set_matrix(cur_mtx)
+    else:
+        if orient == 1 or orient == 3:
+            ctx.scale(-1, -1)
+        line_width = ctx.text_extents(text)[4]
+        ctx.move_to(0 - x_shift*line_width, 0)
+        ctx.show_text(text)
+
+    ctx.set_matrix(mtx)
+    ctx.set_font_options(cur_font)
+    ctx.set_source(cur_color)
+
 # svg = cairo.SVGSurface("example2.svg", WIDTH, HEIGHT)
 # ctx = cairo.Context(svg)
 
