@@ -8,7 +8,7 @@ import getopt
 import re
 import cairo
 import math
-from kicad_sch2pic import draw_line, draw_comp
+from kicad_sch2pic import draw_line, draw_comp, draw_field
 
 
 def main():
@@ -78,7 +78,7 @@ def main():
 
     outfile = cairo.ImageSurface(cairo.FORMAT_ARGB32, page_width, page_height)
     ctx = cairo.Context(outfile)
-    # Рисуем страницуб необязательно но на прозрачный альфа канал смотреть неудобно
+    # Рисуем страницу необязательно но на прозрачный альфа канал смотреть неудобно
     ctx.set_source_rgb(1, 1, 1)
     ctx.rectangle(0, 0, page_width, page_height)
     ctx.fill()
@@ -129,11 +129,18 @@ def main():
         ctx.set_line_cap(cairo.LINE_CAP_ROUND)  # TODO: Пунктир без закруглений
         ctx.set_source_rgb(float(150)/255, 0, 0)
         comp_t = False
+        comp_matrix_disappear = True
         comp_name = ""
         comp_x = 0
         comp_y = 0
+        field_pool = []
+        comp_mtx = ['1', '0', '0', '-1']
+
         for line in infile:
             if comp_t:
+                # Надобность двух нижних строчек вызывает сомнение
+                if comp_matrix_disappear:
+                    comp_mtx = ['1', '0', '0', '-1']
                 if re.match("L\s+[\w\d]*\s+[\w\d\s]*", line):  # Search Search Comp
                     comp_name = re.split("\s+", line)[1]
                     print(line)
@@ -145,18 +152,10 @@ def main():
                     data = re.split("\s+", line)
                     print("Transform matrix: %s" % str(data[1:-1]))
                     comp_mtx = data[1:-1]
+                    comp_matrix_disappear = False
                 if re.match("F\s+[\w\d\s]*", line):  # Draw Field
                     data = re.split("\s+", line)
-                    # print(data)
-                    ctx.select_font_face("sans",
-                                         cairo.FONT_SLANT_NORMAL,
-                                         cairo.FONT_WEIGHT_NORMAL)
-                    ctx.save()
-                    ctx.set_font_size(int(data[6]))
-                    ctx.set_source_rgb(0, 132/float(255), 132/float(255))
-                    ctx.move_to(int(data[4]), int(data[5]))
-                    ctx.show_text(str(data[2]).replace('"', ''))
-                    ctx.restore()
+                    field_pool.append(data)
 
             if re.match("\$Comp", line):
                 comp_t = True
@@ -164,9 +163,15 @@ def main():
             if re.match("\$EndComp", line):  # Draw Comp
                 comp_t = False
                 draw_comp(ctx, library_component[comp_name], comp_mtx, comp_x, comp_y)
+                for i in field_pool:
+                    if i[2] != '""' and i[7] != '0001':
+                        draw_field(ctx, i, comp_mtx, comp_x, comp_y)
+
+                field_pool = []
                 comp_name = ""
                 comp_x = 0
                 comp_y = 0
+
 
     # FIXME: Тест работы отрисовщика компонент
     # ctx.set_line_width(12)

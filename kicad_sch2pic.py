@@ -270,7 +270,6 @@ def draw_comp(ctx, text, component_matrix, x0=0, y0=0):
             if data[-2] != 'W':  # Invisible pin
                 draw_pin(ctx, x, y, length, symbol, textdata)
             # print("Textdata: %s" % str(textdata))
-            # TODO: Draw pin ma,e and number
         if re.match("C\s+[\w\d]*\s+[\w\d\s]*", line):
             data = re.split("\s+", line)
 
@@ -298,6 +297,130 @@ def draw_comp(ctx, text, component_matrix, x0=0, y0=0):
                 ctx.stroke()
 
     ctx.set_matrix(mtx)
+
+
+def draw_field(ctx, data_string, transf_mtx, comp_x=0, comp_y=0):
+    """
+    data_string separate fied like this:
+    ['F', '1', '"OTEST"', 'H', '3750', '5450', '60', '0000', 'C', 'CNN', '']
+    ctx = Cairo Context
+    transformation matrix
+    """
+    mtx = ctx.get_matrix()
+    cur_color = ctx.get_source()
+    cur_font = ctx.get_font_options()
+    xx = mtx[0]
+    xy = mtx[1]
+    yx = mtx[2]
+    yy = mtx[3]
+    scale_x = math.sqrt(xx * xx + xy * xy)
+    scale_y = math.sqrt(yx * yx + yy * yy)
+    xx = int(xx/scale_x)
+    xy = int(xy/scale_x)
+    yx = int(yx/scale_y)
+    yy = int(yy/scale_y)
+    ctx.select_font_face("sans",
+                         cairo.FONT_SLANT_NORMAL,
+                         cairo.FONT_WEIGHT_NORMAL)
+    if int(data_string[1]) < 4:
+        ctx.set_source_rgb(0, 132/float(255), 132/float(255))
+    else:
+        ctx.set_source_rgb(132/float(255), 0, 132/float(255))
+
+    ctx.set_font_size(int(data_string[6]))
+    current_str = str(data_string[2]).replace('"', '')
+    sz = ctx.text_extents(current_str)
+    # Перемещаемся в относительный центр компонента
+    ctx.translate(comp_x, comp_y)
+    # Приводим систему координат в соответствии с компонентом
+    # FIXME: Тут бы делать через ctx.set_matxix()
+    if transf_mtx[0] == '0' and xx != 0:
+        ctx.rotate(math.pi/2)
+
+    cur_mtx = ctx.get_matrix()
+    xx = cur_mtx[0]
+    xy = cur_mtx[1]
+    yx = cur_mtx[2]
+    yy = cur_mtx[3]
+    xx = int(xx/scale_x)
+    xy = int(xy/scale_x)
+    yx = int(yx/scale_y)
+    yy = int(yy/scale_y)
+
+    if xx == 0:
+        if xy != int(transf_mtx[1]):
+            ctx.scale(-1, 1)
+            xy = int(transf_mtx[1])
+        if yx != int(transf_mtx[2]):
+            ctx.scale(1, -1)
+            yx = int(transf_mtx[2])
+    else:
+        if xx != int(transf_mtx[0]):
+            ctx.scale(-1, 1)
+            xx = int(transf_mtx[0])
+        if yy != int(transf_mtx[3]):
+            ctx.scale(1, -1)
+            yy = int(transf_mtx[3])
+    # Вычисляем относительные координаты поля(kicad зачем то дает их
+    # абсолютными хотя при трансформациях они не меняются)
+    dx = int(data_string[4]) - comp_x
+    dy = int(data_string[5]) - comp_y
+
+    # Определяем смещение текста относительно центра прямоугольника
+    # текста со сторонами sz[2], sz[3]
+    if data_string[8] == 'L':
+        ddx = sz[2]/2
+    elif data_string[8] == 'R':
+        ddx = -sz[2]/2
+    else:
+        ddx = 0
+
+    if data_string[9][0] == 'B':
+        ddy = abs(sz[3])/2
+    elif data_string[9][0] == 'T':
+        ddy = -abs(sz[3])/2
+    else:
+        ddy = 0
+
+    # Перемещаемся в точку указанную относительными координатами поля
+    if xx != 0:
+        ctx.translate(dx, dy)
+    else:
+        ctx.translate(xy*yx*dx, xy*yx*dy)
+    # Если поле вертикально совершаем поворот вокруг точки
+    if (data_string[3] == 'V'):
+        ctx.rotate(math.pi/2)
+    # Смещаемся так чтобы курсор находился в центре текстового поля
+    if xx != 0:
+        ctx.translate(ddx, ddy)
+    else:
+        ctx.translate(xy*yx*ddx, xy*yx*ddy)
+    # Отражаем поле так как в kicad разрешена ориентация текста
+    # только (0, -1, 1, 0) и (1, 0, 0, 1)
+    mtx2 = ctx.get_matrix()
+    xx = mtx2[0]
+    xy = mtx2[1]
+    yx = mtx2[2]
+    yy = mtx2[3]
+    xx = int(xx/scale_x)
+    xy = int(xy/scale_x)
+    yx = int(yx/scale_y)
+    yy = int(yy/scale_y)
+    if xx == 0:
+        if xy == 1:
+            ctx.scale(-1, 1)
+        if yx == -1:
+            ctx.scale(1, -1)
+    else:
+        if xx == -1:
+            ctx.scale(-1, 1)
+        if yy == -1:
+            ctx.scale(1, -1)
+    ctx.move_to(-sz[2]/2, abs(sz[3])/2)
+    ctx.show_text(current_str)
+    ctx.set_matrix(mtx)
+    ctx.set_font_options(cur_font)
+    ctx.set_source(cur_color)
 
 # svg = cairo.SVGSurface("example2.svg", WIDTH, HEIGHT)
 # ctx = cairo.Context(svg)
