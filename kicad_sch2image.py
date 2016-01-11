@@ -2,8 +2,16 @@
 # -*- coding: utf-8 -*-
 """
 simple story
+--target \tУказать файл sch который необходимо преобразовать
+--output \tУказать папку куда файл будет сброшен
+-T, --type \tТип файла который будет сгенерен
+-h, --help \tПоказать эту справку
+
+Пример:
+kicad2image --target=./simple.sch --output=/tmp
 """
 import sys
+import os
 import getopt
 import re
 import cairo
@@ -12,9 +20,13 @@ from kicad_sch2pic import draw_line, draw_comp, draw_field, draw_label
 
 
 def main():
-    start_path = "."
+    start_path = os.getcwd()
+    type_output = "png"
+    support_type = ["png", "svg"]
+    output_dir = ""
+
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "ht:", ["help", "target"])
+        opts, args = getopt.getopt(sys.argv[1:], "htTo:", ["help", "target=", "output=", "type="])
     except getopt.GetoptError as e:
         print(e.msg)
         sys.exit(1)
@@ -25,13 +37,50 @@ def main():
 
         if op in ("-t", "--target"):
             start_path = arg
-    # FIXME: Для теста поместим сюда жесткую ссылку
-    start_path = "/home/valber/forge/unitbiotech/grow2_0.sch"
-    lib_path = start_path[:-4]+"-cache.lib"
+
+        if op in ("-o", "--output"):
+            output_dir = arg
+            # TODO: Указать путь к выходному файлу
+            if not os.path.isdir(output_dir):
+                print("Выходная директория указана неверно")
+                sys.exit(0)
+
+        if op in ("-T", "--type"):
+            type_output = arg
+            # TODO: Указать тип выходного файла
+            if type_output not in support_type:
+                print("Этот тип выходного файла не поддерживается")
+                print("Список форматов и их правильное написание")
+                print(support_type)
+                sys.exit(0)
+
     page_height = 1000
     page_width = 1000
     print("Target : %s" % start_path)
+    # TODO: Проверить что сие есть файл не папка
+    if not os.path.isfile(start_path):
+        print("Укажите файл который вы хотите преобразовать")
+        print("%s это не файл" % start_path)
+        sys.exit(0)
+    # TODO: Проверить директорию и найти там cache file если его нет выйти
+    target_dir_path = os.path.abspath(os.path.dirname(start_path))
+    print("Target Directory: %s" % target_dir_path)
+    list_kicad = os.listdir(target_dir_path)
+    lib_path = ""
+    for item in list_kicad:
+        if re.match('[\w\d]*-cache.lib', item):
+            lib_path = item
+    if lib_path == "":
+        print("Увы нам не удалось найти в указанной папке закешированный файл с библиотеками")
+        sys.exit(0)
+    lib_path = target_dir_path + '/' + lib_path
+    print("Cache Lib : %s" % lib_path)
+    if output_dir == "":
+        output_dir = target_dir_path
+    output_file = output_dir + '/' + os.path.basename(start_path)[:-4] + '.' + type_output
+    print("Output File %s" % output_file)
     t = False
+
     with open(start_path) as infile:
         for line in infile:
             if re.match("EESchema Schematic File Version[\s\d\w]*", line):
@@ -76,7 +125,11 @@ def main():
 
     print(library_component.keys())
 
-    outfile = cairo.ImageSurface(cairo.FORMAT_ARGB32, page_width, page_height)
+    if type_output == "svg":
+        outfile = cairo.SVGSurface(output_file, page_width, page_height)
+        ctx = cairo.Context(outfile)
+    else:
+        outfile = cairo.ImageSurface(cairo.FORMAT_ARGB32, page_width, page_height)
     ctx = cairo.Context(outfile)
     # Рисуем страницу необязательно но на прозрачный альфа канал смотреть неудобно
     ctx.set_source_rgb(1, 1, 1)
@@ -206,8 +259,10 @@ def main():
 
     # ctx.move_to(500, 500)
     # ctx.show_text("ATU_Contact_Tr")
-
-    outfile.write_to_png("example_sheet.png")
+    if type_output == "svg":
+        outfile.finish()
+    else:
+        outfile.write_to_png(output_file)
 
 if __name__ == "__main__":
     main()
