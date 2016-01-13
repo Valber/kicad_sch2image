@@ -126,11 +126,11 @@ def main():
     print(library_component.keys())
 
     if type_output == "svg":
-        outfile = cairo.SVGSurface(output_file, page_width, page_height)
-        ctx = cairo.Context(outfile)
+        outfile = cairo.SVGSurface(output_file, int(page_width/4), int(page_height/4))
     else:
-        outfile = cairo.ImageSurface(cairo.FORMAT_ARGB32, page_width, page_height)
+        outfile = cairo.ImageSurface(cairo.FORMAT_ARGB32, int(page_width/4), int(page_height/4))
     ctx = cairo.Context(outfile)
+    ctx.scale(0.25, 0.25)
     # Рисуем страницу необязательно но на прозрачный альфа канал смотреть неудобно
     ctx.set_source_rgb(1, 1, 1)
     ctx.rectangle(0, 0, page_width, page_height)
@@ -211,7 +211,7 @@ def main():
                     comp_mtx = ['1', '0', '0', '-1']
                 if re.match("L\s+[\w\d]*\s+[\w\d\s]*", line):  # Search Search Comp
                     comp_name = re.split("\s+", line)[1]
-                    # print(line)
+                    print(re.split("\s+", line))
                 if re.match("P\s+[\w\d]*\s+[\w\d\s]*", line):  # Search Comp Position
                     comp_x = int(re.split("\s+", line)[1])
                     comp_y = int(re.split("\s+", line)[2])
@@ -230,16 +230,22 @@ def main():
             # Search component
             if re.match("\$EndComp", line):  # Draw Comp
                 comp_t = False
-                draw_comp(ctx, library_component[comp_name], comp_mtx, comp_x, comp_y)
-                for i in field_pool:
-                    if i[2] != '""' and i[7] != '0001':
-                        draw_field(ctx, i, comp_mtx, comp_x, comp_y)
-
+                if comp_name in library_component:
+                    draw_comp(ctx, library_component[comp_name], comp_mtx, comp_x, comp_y)
+                    for i in field_pool:
+                        if i[2] != '""' and i[7] != '0001':
+                            draw_field(ctx, i, comp_mtx, comp_x, comp_y)
+                else:
+                    print("======!!!Error!!!=========")
+                    print("Missing component!!")
+                    print(comp_name)
+                    print(library_component.keys())
+                    print(field_pool)
+                    print("==========================")
                 field_pool = []
                 comp_name = ""
                 comp_x = 0
                 comp_y = 0
-
 
     # FIXME: Тест работы отрисовщика компонент
     # ctx.set_line_width(12)
