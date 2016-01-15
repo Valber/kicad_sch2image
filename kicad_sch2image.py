@@ -3,7 +3,7 @@
 """
 simple story
 --target \tУказать файл sch который необходимо преобразовать
---output \tУказать папку куда файл будет сброшен
+--output \tУказать папку куда файл будет сброшен или файл
 -T, --type \tТип файла который будет сгенерен
 -h, --help \tПоказать эту справку
 
@@ -22,7 +22,7 @@ from kicad_sch2pic import draw_line, draw_comp, draw_field, draw_label
 def main():
     start_path = os.getcwd()
     type_output = "png"
-    support_type = ["png", "svg"]
+    support_type = ["png", "svg", "ps"]
     output_dir = ""
 
     try:
@@ -40,10 +40,6 @@ def main():
 
         if op in ("-o", "--output"):
             output_dir = arg
-            # TODO: Указать путь к выходному файлу
-            if not os.path.isdir(output_dir):
-                print("Выходная директория указана неверно")
-                sys.exit(0)
 
         if op in ("-T", "--type"):
             type_output = arg
@@ -77,7 +73,26 @@ def main():
     print("Cache Lib : %s" % lib_path)
     if output_dir == "":
         output_dir = target_dir_path
-    output_file = output_dir + '/' + os.path.basename(start_path)[:-4] + '.' + type_output
+
+    # TODO: Указать путь к выходному файлу
+    if os.path.isdir(output_dir):
+        output_file = output_dir + '/' + os.path.basename(start_path)[:-4] + '.' + type_output
+    else:
+        if os.path.isdir(os.path.dirname(output_dir)):
+            print("Указан выходной файл")
+            output_dir = os.path.abspath(output_dir)
+            output_file = output_dir
+        else:
+            if os.path.dirname(output_dir) == "":
+                output_file = output_dir
+                output_dir = target_dir_path
+                output_file = output_dir + '/' + output_file
+            else:
+                print("Выходная директория указана неверно")
+                print(output_dir)
+                print("Outputdir %s" % os.path.dirname(output_dir))
+                sys.exit(0)
+
     print("Output File %s" % output_file)
     t = False
 
@@ -127,6 +142,8 @@ def main():
 
     if type_output == "svg":
         outfile = cairo.SVGSurface(output_file, int(page_width/4), int(page_height/4))
+    elif type_output == "ps":
+        outfile = cairo.PSSurface(output_file, int(page_width/4), int(page_height/4))
     else:
         outfile = cairo.ImageSurface(cairo.FORMAT_ARGB32, int(page_width/4), int(page_height/4))
     ctx = cairo.Context(outfile)
@@ -144,7 +161,7 @@ def main():
 
         text_flag = False
         data_string = ""
-        
+
         for line in infile:
             # Search and draw Wires
             if t:
@@ -266,6 +283,8 @@ def main():
     # ctx.move_to(500, 500)
     # ctx.show_text("ATU_Contact_Tr")
     if type_output == "svg":
+        outfile.finish()
+    elif type_output == "ps":
         outfile.finish()
     else:
         outfile.write_to_png(output_file)
