@@ -26,7 +26,7 @@ def main():
     output_dir = ""
 
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "htTo:", ["help", "target=", "output=", "type="])
+        opts, args = getopt.getopt(sys.argv[1:], "htTol:", ["help", "target=", "output=", "type=", "library="])
     except getopt.GetoptError as e:
         print(e.msg)
         sys.exit(1)
@@ -50,6 +50,9 @@ def main():
                 print(support_type)
                 sys.exit(0)
 
+        if op in ("-l", "--library"):
+            lib_path = arg      # Пока с full path будем работать ради
+
     page_height = 1000
     page_width = 1000
     print("Target : %s" % start_path)
@@ -62,14 +65,19 @@ def main():
     target_dir_path = os.path.abspath(os.path.dirname(start_path))
     print("Target Directory: %s" % target_dir_path)
     list_kicad = os.listdir(target_dir_path)
-    lib_path = ""
-    for item in list_kicad:
-        if re.match('[\w\d]*-cache.lib', item):
-            lib_path = item
-    if lib_path == "":
-        print("Увы нам не удалось найти в указанной папке закешированный файл с библиотеками")
-        sys.exit(0)
-    lib_path = target_dir_path + '/' + lib_path
+    try:
+        lib_path
+    except NameError:
+        lib_path = None
+    if lib_path is None:
+        lib_path = ""
+        for item in list_kicad:
+            if re.match('[\w\d]*-cache.lib', item):
+                lib_path = item
+        if lib_path == "":
+            print("Увы нам не удалось найти в указанной папке закешированный файл с библиотеками")
+            sys.exit(0)
+        lib_path = target_dir_path + '/' + lib_path
     print("Cache Lib : %s" % lib_path)
     if output_dir == "":
         output_dir = target_dir_path
