@@ -134,19 +134,31 @@ def main():
     t = False
     libcomp = ""
     namecomp = ""
+    alias = []
     with open(lib_path) as infile:
         for line in infile:
             if re.match("ENDDEF", line):
                 t = False
-                library_component[namecomp] = libcomp
+                if len(alias) > 0:
+                    alias.append(namecomp)
+                    for cname in alias:
+                        library_component[cname] = libcomp
+                else:
+                    library_component[namecomp] = libcomp
                 libcomp = ""
+                alias = []
             if re.match("DEF[\s\d\w]*", line):
                 t = True
                 namecomp = re.split("\s+", line)[1]
+
             if t:
                 libcomp = libcomp + line
+                if re.match("ALIAS[\s\d\w]*", line):
+                    alias = re.split("\s+", line[:-1])[1:]
+                    # print("Alias")
+                    # print(alias)
 
-    print(library_component.keys())
+    # print(library_component.keys())
 
     if type_output == "svg":
         outfile = cairo.SVGSurface(output_file, int(page_width/4), int(page_height/4))
@@ -260,7 +272,7 @@ def main():
                     comp_mtx = ['1', '0', '0', '-1']
                 if re.match("L\s+[\w\d]*\s+[\w\d\s]*", line):  # Search Search Comp
                     comp_name = re.split("\s+", line)[1]
-                    print(re.split("\s+", line))
+                    # print(re.split("\s+", line))
                 if re.match("P\s+[\w\d]*\s+[\w\d\s]*", line):  # Search Comp Position
                     comp_x = int(re.split("\s+", line)[1])
                     comp_y = int(re.split("\s+", line)[2])
