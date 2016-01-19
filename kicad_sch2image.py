@@ -166,9 +166,11 @@ def main():
         ctx.set_line_width(8)
         t = False
         shet_t = False
+        bus = False
 
         text_flag = False
         data_string = ""
+        current_sheet = []
 
         for line in infile:
             # Search and draw Wires
@@ -177,8 +179,23 @@ def main():
                 draw_line(ctx, int(l[1]), int(l[2]), int(l[3]), int(l[4]))
                 ctx.stroke()
                 t = False
-            if re.match("Wire Wire Line", line):
+            if re.match("Wire Wire Line", line) or re.match("Entry Wire Line", line):
                 t = True
+
+            # Search and draw Bus
+            if bus:
+                l = re.split("\s+", line)
+                cur_color = ctx.get_source()
+                cur_linew = ctx.get_line_width()
+                ctx.set_source_rgb(0, 0, float(132)/255)
+                ctx.set_line_width(12)
+                draw_line(ctx, int(l[1]), int(l[2]), int(l[3]), int(l[4]))
+                ctx.stroke()
+                ctx.set_source(cur_color)
+                ctx.set_line_width(cur_linew)
+                bus = False
+            if re.match("Wire Bus Line", line) or re.match("Entry Bus Bus", line):
+                bus = True
 
             # Draw Connection
             if re.match("Connection ~[\w\s\d]*", line):
@@ -200,7 +217,14 @@ def main():
                 # Text GLabel 2750 750  0    60   Input ~ 0
 
             # Draw Sheet
+            if re.match("\$EndSheet", line):
+                shet_t = False
+                print("=====Sheet====")
+                for lsheet in current_sheet:
+                    print(lsheet)
+                print("===EndSheet===")
             if shet_t:
+                current_sheet.append(line[:-1])
                 if re.match("S\s+[\d\w\s]*", line):
                     data = re.split("\s+", line)
                     print(data)
@@ -213,9 +237,9 @@ def main():
                     ctx.rectangle(x1, y1, x2, y2)
                     ctx.stroke()
                     ctx.restore()
-                    shet_t = False
             if re.match("\$Sheet", line):
                 shet_t = True
+                current_sheet = []
 
     with open(start_path) as infile:
         ctx.set_line_width(12)
