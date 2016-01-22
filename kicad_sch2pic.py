@@ -29,9 +29,11 @@ import math
 import cairo
 import re
 
-WIDTH, HEIGHT = 2000, 1000
-svg = cairo.SVGSurface("example2.svg", WIDTH, HEIGHT)
-ctx = cairo.Context(svg)
+# WIDTH, HEIGHT = 2000, 1000
+# svg = cairo.SVGSurface("example2.svg", WIDTH, HEIGHT)
+# ctx = cairo.Context(svg)        # это раскомичивается чтобы
+#                                 # автодополнение работало и понимало
+#                                 # какой тип у объекта
 
 
 def draw_line(ctx, x1, y1, x2, y2, x0=0, y0=0):
