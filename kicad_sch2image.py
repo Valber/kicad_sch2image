@@ -178,6 +178,8 @@ def main():
         ctx.set_line_width(8)
         t = False
         shet_t = False
+        shet_orient = True
+        x1 = y1 = x2 = y2 = 0
         bus = False
 
         text_flag = False
@@ -222,6 +224,7 @@ def main():
             # Draw Text Labels GLabels HLabels Notes
             if text_flag:
                 draw_label(ctx, line[:-1], data_string)
+                # print(data_string)
                 text_flag = False
             if re.match("Text [\w\s\d]*", line):
                 text_flag = True
@@ -231,15 +234,91 @@ def main():
             # Draw Sheet
             if re.match("\$EndSheet", line):
                 shet_t = False
-                print("=====Sheet====")
+                cur_color = ctx.get_source()
+                cur_font = ctx.get_font_options()
+                cur_mtx = ctx.get_matrix()
+                ctx.select_font_face("sans",
+                                     cairo.FONT_SLANT_NORMAL,
+                                     cairo.FONT_WEIGHT_NORMAL)
                 for lsheet in current_sheet:
-                    print(lsheet)
-                print("===EndSheet===")
+                    if re.match("F0 [\d\w\s]*", lsheet):
+                        data = re.split("\s+", lsheet)
+                        text = str(data[1]).replace('"', '')
+                        font_size = int(data[2])
+                        ctx.set_font_size(font_size)
+                        ctx.set_source_rgb(0, 132/float(255), 132/float(255))
+                        if shet_orient:
+                            x = x1
+                            y = y1 - 0.25*font_size
+                            ctx.move_to(x, y)
+                            ctx.show_text("Sheet:" + text)
+                        else:
+                            x = x1 - 0.25*font_size
+                            y = y1 + y2
+                            ctx.translate(x, y)
+                            ctx.rotate(-math.pi/2)
+                            ctx.move_to(0, 0)
+                            ctx.show_text("Sheet:" + text)
+                            ctx.set_matrix(cur_mtx)
+
+                    if re.match("F1 [\d\w\s]*", lsheet):
+                        data = re.split("\s+", lsheet)
+                        text = str(data[1]).replace('"', '')
+                        font_size = int(data[2])
+                        ctx.set_font_size(font_size)
+                        ctx.set_source_rgb(132/float(255), 132/float(255), 0)
+                        if shet_orient:
+                            x = x1
+                            y = y1 + y2 + font_size
+                            ctx.move_to(x, y)
+                            ctx.show_text("File:" + text)
+                        else:
+                            x = x1 + x2 + font_size
+                            y = y1 + y2
+                            ctx.translate(x, y)
+                            ctx.rotate(-math.pi/2)
+                            ctx.move_to(0, 0)
+                            ctx.show_text("File:" + text)
+                            ctx.set_matrix(cur_mtx)
+
+                ctx.set_source(cur_color)
+                ctx.set_font_options(cur_font)
+                shet_orient = True
             if shet_t:
                 current_sheet.append(line[:-1])
+                if re.match("F\d+[\d\w\s]*", line):
+                    data = re.split("\s+", line)
+                    if len(data) > 4:
+                        # ['Text', 'HLabel', '3450', '1950', '0', '60', 'Input', '~', '0', '']
+                        data_string = ['Text', 'HLabel']
+                        data_string.append(data[4])
+                        data_string.append(data[5])
+                        if data[3] == 'L':
+                            data_string.append('2')
+                        elif data[3] == 'R':
+                            data_string.append('0')
+                        elif data[3] == 'T':
+                            data_string.append('3')
+                            shet_orient = False
+                        elif data[3] == 'B':
+                            data_string.append('1')
+                            shet_orient = False
+
+                        data_string.append(data[6])
+                        if data[2] == 'I':
+                            data_string.append('Input')
+                        elif data[2] == 'I':
+                            data_string.append('Output')
+                        elif data[2] == 'U':
+                            data_string.append('UnSpc')
+                        else:
+                            data_string.append('BiDi')
+                            data_string = data_string + ['~', '0', '']
+                        text = str(data[1]).replace('"', '')
+                        draw_label(ctx, text, data_string)
+
                 if re.match("S\s+[\d\w\s]*", line):
                     data = re.split("\s+", line)
-                    print(data)
                     ctx.save()
                     ctx.set_source_rgb(float(147)/255, 0, float(147)/255)
                     x1 = int(data[1])
