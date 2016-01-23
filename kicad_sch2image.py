@@ -110,19 +110,15 @@ def main():
         sys.exit(0)
     t = False
 
-    sys.exit(0)                 # FIXME: Debug console
     with open(lib_path) as infile:
         for line in infile:
             if re.match("EESchema-LIBRARY Version 2[\s\d\w]*", line):
                 print(line)
-            if re.match("EESchema-LIBRARY Version 2.3\s*", line):
+            if re.match("EESchema-LIBRARY Version 2.3\s+[\s\d\w]*", line):
                 t = True
-            if re.match("EESchema-LIBRARY Version 2.2\s*", line):
+            if re.match("EESchema-LIBRARY Version 2.2\s+[\s\d\w]*", line):
                 t = True
-            # FIXME: Хреново нужно умнее вычленять версию. С учетом
-            # того что в некоторых версиях они после версии дату пишут.
-
-    library_component = {}      # название : текст компонента
+    library_component = {}      # component_name : component_ful_lib_text
     t = False
     libcomp = ""
     namecomp = ""
@@ -151,7 +147,7 @@ def main():
                     # print(alias)
 
     # print(library_component.keys())
-
+    type_output = args.type
     if type_output == "svg":
         outfile = cairo.SVGSurface(output_file, int(page_width/4), int(page_height/4))
     elif type_output == "ps":
@@ -379,24 +375,9 @@ def main():
                 comp_x = 0
                 comp_y = 0
 
-    # FIXME: Тест работы отрисовщика компонент
-    # ctx.set_line_width(12)
-    # ctx.set_line_cap(cairo.LINE_CAP_ROUND)
-    # ctx.set_source_rgb(float(150)/255, 0, 0)
-    # draw_comp(ctx, library_component["M_CC"], 10200, 1000)
-    # print(library_component["M_CC"])
-
     ctx.set_source_rgb(0, 1, 0)
     ctx.set_line_width(8)
     ctx.stroke()
-    # ctx.set_source_rgb(0, 132/255, 132/255)
-    # ctx.select_font_face("sans",
-    #                      cairo.FONT_SLANT_NORMAL,
-    #                      cairo.FONT_WEIGHT_NORMAL)
-    # ctx.set_font_size(60)
-
-    # ctx.move_to(500, 500)
-    # ctx.show_text("ATU_Contact_Tr")
     if type_output == "svg":
         outfile.finish()
     elif type_output == "ps":

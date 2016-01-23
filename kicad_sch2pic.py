@@ -37,11 +37,11 @@ import re
 
 
 def draw_line(ctx, x1, y1, x2, y2, x0=0, y0=0):
-    """Отрисовка линии компонента
+    """Draw line
     draw_line(ctx, x1, y1, x2, y2, x0=0, y0=0)
-    ctx - полотно cairo.Context
-    x1, y1 координаты первой точки
-    x0, y0 кординаты центра относительной системы координат
+    ctx - cairo.Context
+    x1, y1 first point
+    x0, y0 - center relative coordinate system
     """
     mtx = ctx.get_matrix()
     ctx.translate(x0, y0)
@@ -56,7 +56,6 @@ def draw_line(ctx, x1, y1, x2, y2, x0=0, y0=0):
 def draw_pin(ctx, x, y, length, orient, font_data, x0=0, y0=0):
     """Отрисовка вывода компнента
     """
-    # TODO: доделать поддержку верт пинов
     mtx = ctx.get_matrix()
 
     lab = font_data[0]
@@ -602,25 +601,3 @@ def draw_label(ctx, text, data_string):
     ctx.set_matrix(mtx)
     ctx.set_font_options(cur_font)
     ctx.set_source(cur_color)
-
-# svg = cairo.SVGSurface("example2.svg", WIDTH, HEIGHT)
-# ctx = cairo.Context(svg)
-
-# ctx.set_line_width(8)
-# ctx.set_line_cap(cairo.LINE_CAP_ROUND)  # TODO: Пунктир без закруглений
-# ctx.set_source_rgb(150/255, 0, 0)
-
-# # Придумавшего этот формат надо посадить на кол
-# # A 0 -150 50 -1799 -1 0 1 0 N -50 -150 50 -150
-# draw_arc(ctx, 0, -150, 50, 0, -2, 0, 0)
-
-# # Применение покраски на только что отрисованные детали
-# # ctx.set_source_rgb(0.5, 0.0, 0.5)  # Solid color
-# ctx.stroke()
-
-# ctx.set_source_rgb(0, 132/255, 132/255)
-# ctx.select_font_face("sans",
-#                      cairo.FONT_SLANT_NORMAL,
-#                      cairo.FONT_WEIGHT_NORMAL)
-# ctx.set_font_size(60)
-# svg.finish()
