@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-simple story
 --target \tУказать файл sch который необходимо преобразовать
 --output \tУказать папку куда файл будет сброшен или файл
 -T, --type \tТип файла который будет сгенерен
@@ -12,7 +11,7 @@ kicad2image --target=./simple.sch --output=/tmp
 """
 import sys
 import os
-import getopt
+import argparse
 import re
 import cairo
 import math
@@ -21,56 +20,33 @@ from kicad_sch2pic import draw_line, draw_comp, draw_field, draw_label
 
 def main():
     start_path = os.getcwd()
-    type_output = "png"
+    type_default_output = "png"
     support_type = ["png", "svg", "ps"]
     output_dir = ""
 
-    try:
-        opts, args = getopt.getopt(sys.argv[1:], "htTol:", ["help", "target=", "output=", "type=", "library="])
-    except getopt.GetoptError as e:
-        print(e.msg)
-        sys.exit(1)
-    for op, arg in opts:
-        if op in ("-h", "--help"):
-            print(__doc__)
-            sys.exit(0)
-
-        if op in ("-t", "--target"):
-            start_path = arg
-
-        if op in ("-o", "--output"):
-            output_dir = arg
-
-        if op in ("-T", "--type"):
-            type_output = arg
-            # TODO: Указать тип выходного файла
-            if type_output not in support_type:
-                print("Этот тип выходного файла не поддерживается")
-                print("Список форматов и их правильное написание")
-                print(support_type)
-                sys.exit(0)
-
-        if op in ("-l", "--library"):
-            lib_path = arg      # Пока с full path будем работать ради
-
+    parser = argparse.ArgumentParser(description="kicad_sch2image - convert sch file to image")
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument("-v", "--verbose", action="store_true")
+    parser.add_argument("target", help="target *.sch file")
+    parser.add_argument('-o', "--output", help="output dir or file", default=None)
+    parser.add_argument('-T', '--type', choices=support_type,
+                        default=type_default_output, help="type output file")
+    parser.add_argument('-L', '--library', metavar='lib', help="cashe lib file or dir with it")
+    args = parser.parse_args()
+    start_path = args.target
     page_height = 1000
     page_width = 1000
     print("Target : %s" % start_path)
-    # TODO: Проверить что сие есть файл не папка
     if not os.path.isfile(start_path):
         print("Укажите файл который вы хотите преобразовать")
         print("%s это не файл" % start_path)
         sys.exit(0)
-    # TODO: Проверить директорию и найти там cache file если его нет выйти
     target_dir_path = os.path.abspath(os.path.dirname(start_path))
     print("Target Directory: %s" % target_dir_path)
-    list_kicad = os.listdir(target_dir_path)
-    try:
-        lib_path
-    except NameError:
-        lib_path = None
+    lib_path = args.library
     if lib_path is None:
         lib_path = ""
+        list_kicad = os.listdir(target_dir_path)
         for item in list_kicad:
             if re.match('[\w\d]*-cache.lib', item):
                 lib_path = item
@@ -78,13 +54,27 @@ def main():
             print("Увы нам не удалось найти в указанной папке закешированный файл с библиотеками")
             sys.exit(0)
         lib_path = target_dir_path + '/' + lib_path
+    else:
+        if os.path.isdir(lib_path):
+            list_kicad = os.listdir(args.library)
+            lib_path = ""
+            for item in list_kicad:
+                if re.match('[\w\d]*-cache.lib', item):
+                    lib_path = item
+            if lib_path == "":
+                print("Увы нам не удалось найти в указанной папке закешированный файл с библиотеками")
+                sys.exit(0)
+            lib_path = os.path.abspath(args.library) + '/' + lib_path
+        else:
+            lib_path = os.path.abspath(args.library)
     print("Cache Lib : %s" % lib_path)
-    if output_dir == "":
+    if args.output is None:
         output_dir = target_dir_path
-
-    # TODO: Указать путь к выходному файлу
+    else:
+        output_dir = args.output
+    # Check OUTPUT file or dir
     if os.path.isdir(output_dir):
-        output_file = output_dir + '/' + os.path.basename(start_path)[:-4] + '.' + type_output
+        output_file = output_dir + '/' + os.path.basename(start_path)[:-4] + '.' + args.type
     else:
         if os.path.isdir(os.path.dirname(output_dir)):
             print("Указан выходной файл")
@@ -119,6 +109,8 @@ def main():
         print("Don't find correct EESchematic File Version")
         sys.exit(0)
     t = False
+
+    sys.exit(0)                 # FIXME: Debug console
     with open(lib_path) as infile:
         for line in infile:
             if re.match("EESchema-LIBRARY Version 2[\s\d\w]*", line):
