@@ -601,3 +601,34 @@ def draw_label(ctx, text, data_string):
     ctx.set_matrix(mtx)
     ctx.set_font_options(cur_font)
     ctx.set_source(cur_color)
+
+
+def smart_split(input_list):
+    """
+    merge string in ""
+    """
+    flag_1 = True
+    flag_2 = True
+    output = []
+    a = ""
+    for i in input_list:
+        l = len(i)
+        if str(i)[0] == "'" and str(i)[-1] != "'" and l > 2:
+            flag_1 = False
+        if str(i)[0] == '"' and str(i)[-1] != '"' and l > 2:
+            flag_2 = False
+
+        if flag_1 and flag_2:
+            output.append(i)
+        else:
+            a = a + str(i)
+        if str(i)[0] != '"' and str(i)[-1] == '"' and l > 2:
+            flag_2 = True
+            output.append(a)
+            a = ""
+
+        if str(i)[0] != "'" and str(i)[-1] == "'" and l > 2:
+            flag_1 = True
+            output.append(a)
+            a = ""
+    return output
