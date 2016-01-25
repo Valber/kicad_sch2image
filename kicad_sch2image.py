@@ -15,7 +15,7 @@ import argparse
 import re
 import cairo
 import math
-from kicad_sch2pic import draw_line, draw_comp, draw_field, draw_label
+from kicad_sch2pic import draw_line, draw_comp, draw_field, draw_label, smart_split
 
 
 def main():
@@ -133,6 +133,8 @@ def main():
                         library_component[cname] = libcomp
                 else:
                     library_component[namecomp] = libcomp
+                    if namecomp[0] == '~':
+                        library_component[namecomp[1:]] = libcomp
                 libcomp = ""
                 alias = []
             if re.match("DEF[\s\d\w]*", line):
@@ -337,7 +339,7 @@ def main():
                 # Надобность двух нижних строчек вызывает сомнение
                 if comp_matrix_disappear:
                     comp_mtx = ['1', '0', '0', '-1']
-                if re.match("L\s+[\w\d]*\s+[\w\d\s]*", line):  # Search Search Comp
+                if re.match("L[\s\w\d]*\s+[\w\d\s]*", line):  # Search Search Comp
                     comp_name = re.split("\s+", line)[1]
                     # print(re.split("\s+", line))
                 if re.match("P\s+[\w\d]*\s+[\w\d\s]*", line):  # Search Comp Position
@@ -358,11 +360,13 @@ def main():
             # Search component
             if re.match("\$EndComp", line):  # Draw Comp
                 comp_t = False
+                # print comp_name
                 if comp_name in library_component:
                     draw_comp(ctx, library_component[comp_name], comp_mtx, comp_x, comp_y)
                     for i in field_pool:
                         if i[2] != '""' and i[7] != '0001':
-                            draw_field(ctx, i, comp_mtx, comp_x, comp_y)
+                            # FIXME: \n line string end
+                            draw_field(ctx, smart_split(i[:-1]), comp_mtx, comp_x, comp_y)
                 else:
                     print("======!!!Error!!!=========")
                     print("Missing component!!")
